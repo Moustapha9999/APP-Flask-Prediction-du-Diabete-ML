@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prédiction du Diabète - ML App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- En-tête -->
+        <header>
+            <h1> Système de Prédiction du Diabète</h1>
+            <p class="subtitle">Application d'Intelligence Artificielle pour la détection précoce</p>
+            <div class="model-info">
+                <span class="badge"> Modèle: Logistic Regression + SMOTE</span>
+                <span class="badge"> Recall: 98.18%</span>
+                <span class="badge"> Accuracy: 80.52%</span>
+            </div>
+        </header>
+
+        <!-- Contenu principal -->
+        <div class="main-content">
+            <!-- Formulaire de saisie -->
+            <div class="form-section">
+                <h2> Informations du Patient</h2>
+                <form id="predictionForm">
+                    <div class="form-grid">
+                        <!-- Pregnancies -->
+                        <div class="form-group">
+                            <label for="pregnancies">
+                                <span class="icon">🤰</span>
+                                Nombre de grossesses
+                            </label>
+                            <input type="number" id="pregnancies" name="pregnancies" 
+                                   min="0" max="20" step="1" value="1" required>
+                            <small>Nombre de fois enceinte</small>
+                        </div>
+
+                        <!-- Glucose -->
+                        <div class="form-group">
+                            <label for="glucose">
+                                <span class="icon">🩸</span>
+                                Glucose (mg/dL)
+                            </label>
+                            <input type="number" id="glucose" name="glucose" 
+                                   min="0" max="300" step="1" value="120" required>
+                            <small>Concentration de glucose plasmatique</small>
+                        </div>
+
+                        <!-- Blood Pressure -->
+                        <div class="form-group">
+                            <label for="bloodPressure">
+                                <span class="icon">💓</span>
+                                Pression artérielle (mm Hg)
+                            </label>
+                            <input type="number" id="bloodPressure" name="bloodPressure" 
+                                   min="0" max="200" step="1" value="70" required>
+                            <small>Pression artérielle diastolique</small>
+                        </div>
+
+                        <!-- Skin Thickness -->
+                        <div class="form-group">
+                            <label for="skinThickness">
+                                <span class="icon">📏</span>
+                                Épaisseur de la peau (mm)
+                            </label>
+                            <input type="number" id="skinThickness" name="skinThickness" 
+                                   min="0" max="100" step="1" value="20" required>
+                            <small>Épaisseur du pli cutané</small>
+                        </div>
+
+                        <!-- Insulin -->
+                        <div class="form-group">
+                            <label for="insulin">
+                                <span class="icon">💉</span>
+                                Insuline (µU/mL)
+                            </label>
+                            <input type="number" id="insulin" name="insulin" 
+                                   min="0" max="900" step="1" value="80" required>
+                            <small>Insuline sérique à 2 heures</small>
+                        </div>
+
+                        <!-- BMI -->
+                        <div class="form-group">
+                            <label for="bmi">
+                                <span class="icon">⚖️</span>
+                                IMC (kg/m²)
+                            </label>
+                            <input type="number" id="bmi" name="bmi" 
+                                   min="0" max="70" step="0.1" value="25.0" required>
+                            <small>Indice de Masse Corporelle</small>
+                        </div>
+
+                        <!-- Diabetes Pedigree Function -->
+                        <div class="form-group">
+                            <label for="diabetesPedigreeFunction">
+                                <span class="icon">🧬</span>
+                                Fonction de pedigree
+                            </label>
+                            <input type="number" id="diabetesPedigreeFunction" 
+                                   name="diabetesPedigreeFunction" 
+                                   min="0" max="3" step="0.001" value="0.5" required>
+                            <small>Fonction héréditaire du diabète</small>
+                        </div>
+
+                        <!-- Age -->
+                        <div class="form-group">
+                            <label for="age">
+                                <span class="icon">🎂</span>
+                                Âge (années)
+                            </label>
+                            <input type="number" id="age" name="age" 
+                                   min="1" max="120" step="1" value="30" required>
+                            <small>Âge du patient</small>
+                        </div>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-icon">🔍</span>
+                            Analyser
+                        </button>
+                        <button type="reset" class="btn btn-secondary">
+                            <span class="btn-icon">🔄</span>
+                            Réinitialiser
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Section des résultats (cachée au départ) -->
+            <div class="result-section" id="resultSection" style="display: none;">
+                <h2> Résultat de l'Analyse</h2>
+                <div class="result-card" id="resultCard">
+                    <div class="result-header">
+                        <div class="result-icon" id="resultIcon"></div>
+                        <div class="result-title" id="resultTitle"></div>
+                        <div class="result-confidence" id="resultConfidence"></div>
+                    </div>
+                    
+                    <div class="result-body">
+                        <div class="probability-bars">
+                            <div class="probability-item">
+                                <div class="probability-label">
+                                    <span>Non Diabétique</span>
+                                    <span class="probability-value" id="probaNonDiabetic">0%</span>
+                                </div>
+                                <div class="probability-bar">
+                                    <div class="probability-fill probability-fill-success" 
+                                         id="barNonDiabetic" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="probability-item">
+                                <div class="probability-label">
+                                    <span>Diabétique</span>
+                                    <span class="probability-value" id="probaDiabetic">0%</span>
+                                </div>
+                                <div class="probability-bar">
+                                    <div class="probability-fill probability-fill-danger" 
+                                         id="barDiabetic" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-footer">
+                        <p class="disclaimer">
+                             <strong>Avertissement:</strong> Ce résultat est une prédiction basée sur un modèle d'IA 
+                            et ne remplace pas un diagnostic médical professionnel. Consultez un médecin pour un avis expert.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pied de page -->
+        <footer>
+            <p><strong>Projet Machine Learning</strong></p>
+            <p>Master 2 IAGE - Data Management & Analytics</p>
+            <p>Réalisé par: Moustapha Youssouf Sall & Mouhamed Moustapha SY</p>
+            <p>Institut Supérieur d'Informatique (ISI) - 2026</p>
+        </footer>
+    </div>
+
+    <!-- Overlay de chargement -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Analyse en cours...</p>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
